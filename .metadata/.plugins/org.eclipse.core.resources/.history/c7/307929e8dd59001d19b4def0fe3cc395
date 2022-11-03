@@ -1,0 +1,68 @@
+package com.usuario.service1.service;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import com.usuario.service1.entity.Usuario;
+import com.usuario.service1.feignclients.CarFeignClient;
+import com.usuario.service1.feignclients.MotoFeignClient;
+import com.usuario.service1.models.Car;
+import com.usuario.service1.models.Moto;
+import com.usuario.service1.repository.UsuarioRepository;
+
+@Service
+public class UsuarioService {
+
+	@Autowired
+	private RestTemplate restTemplate;
+
+	@Autowired
+	private UsuarioRepository usuarioRepository;
+
+	@Autowired
+	private CarFeignClient carFeignClient;
+
+	@Autowired
+	private MotoFeignClient motoFeignClient;
+
+	public List<Usuario> getAll() {
+		return usuarioRepository.findAll();
+
+	}
+
+	// metodo
+	public Usuario getUsuarioById(int id) {
+		return usuarioRepository.findById(id).orElse(null);
+	}
+
+	public Usuario save(Usuario usuario) {
+		Usuario nuevoUsuario = usuarioRepository.save(usuario);
+		return nuevoUsuario;
+	}
+
+	public List<Car> getCarros(int usuarioId) {
+		List<Car> cars = restTemplate.getForObject("http://localhost:8082/carro/usuario/" + usuarioId, List.class);
+		return cars;
+	}
+
+	public List<Moto> getMotos(int usuarioId) {
+		List<Moto> motos = restTemplate.getForObject("http://localhost:8083/moto/usuario/" + usuarioId, List.class);
+		return motos;
+	}
+
+	public Car saveCarro(int usuarioId, Car car) {
+		car.setUsuarioId(usuarioId);
+		Car nuevoCarro = carFeignClient.save(car);
+		return nuevoCarro;
+	}
+	
+	public Moto saveMoto(int usuarioId, Moto moto) {
+		moto.setUsuarioId(usuarioId);
+		Moto nuevaMoto = motoFeignClient.save(moto);
+		return nuevaMoto;
+	}
+
+}
